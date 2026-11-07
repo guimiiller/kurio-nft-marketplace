@@ -38,7 +38,9 @@ export const nftHandlers = [
 
     if (min !== null && max !== null && min > max) {
       return HttpResponse.json(
-        { message: "O preço mínimo não pode superar o máximo." },
+        {
+          message: "O preço mínimo não pode superar o máximo.",
+        },
         { status: 400 },
       );
     }
@@ -74,5 +76,18 @@ export const nftHandlers = [
       data: filtered.slice(start, start + limit),
       total,
     });
+  }),
+
+  http.get("/api/nfts/:id", ({ params }) => {
+    const nft = nfts.find((item) => item.id === String(params.id));
+
+    if (!nft) {
+      return HttpResponse.json(
+        { message: "NFT não encontrado." },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json(nft);
   }),
 ];
