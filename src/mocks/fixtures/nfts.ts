@@ -1,13 +1,4 @@
-export interface NFT {
-  id: string;
-  name: string;
-  price: string;
-  image: string;
-  category: string;
-  network: string;
-  available: number;
-  version: number;
-}
+import type { NFT } from "../../features/nfts/types/nft.types";
 
 export const nfts: NFT[] = [
   {
