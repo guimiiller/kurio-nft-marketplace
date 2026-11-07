@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import axios from "axios";
+
 import {
   ArrowLeft,
   Heart,
@@ -14,20 +16,19 @@ import { useNFT } from "../features/nfts/hooks/use-nft";
 import { defaultNFTFilters } from "../features/nfts/types/nft-filters.types";
 import type { NFT } from "../features/nfts/types/nft.types";
 
-function multiplyETH(price: string, quantity: number): string {
-  const [integer, fraction = ""] = price.split(".");
-  const decimals = fraction.length;
+import { useAddCartItem, useCart } from "../features/cart/hooks/use-cart";
+import { multiplyEth } from "../features/cart/utils/eth";
 
-  const units = BigInt(integer + fraction.padEnd(decimals, "0"));
-  const result = units * BigInt(quantity);
+function getErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const message: unknown = error.response?.data?.message;
 
-  if (decimals === 0) return result.toString();
+    if (typeof message === "string") {
+      return message;
+    }
+  }
 
-  const padded = result.toString().padStart(decimals + 1, "0");
-  const whole = padded.slice(0, -decimals);
-  const decimal = padded.slice(-decimals).replace(/0+$/, "");
-
-  return decimal ? `${whole}.${decimal}` : whole;
+  return "Não foi possível adicionar o NFT. Tente novamente.";
 }
 
 export function NFTDetailPage() {
@@ -50,6 +51,7 @@ export function NFTDetailPage() {
             <div className="h-24 rounded bg-[#2b1a15]" />
           </div>
         </div>
+
         <span className="sr-only">Carregando NFT...</span>
       </main>
     );
@@ -91,18 +93,79 @@ export function NFTDetailPage() {
 }
 
 function NFTDetailContent({ nft }: { nft: NFT }) {
+  const navigate = useNavigate();
+
   const [quantity, setQuantity] = useState(1);
   const [favorite, setFavorite] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const addItem = useAddCartItem();
+  const { data: cart, isPending: isCartPending } = useCart();
 
   const available = Math.max(0, nft.available);
-  const totalPrice = multiplyETH(nft.price, quantity);
+  const totalPrice = multiplyEth(nft.price, quantity);
+
+  const quantityInCart =
+    cart?.items.find((item) => item.nftId === nft.id)?.quantity ?? 0;
+
+  const remaining = Math.max(0, available - quantityInCart);
+
+  const isBusy = addItem.isPending || isCartPending;
+  const canAdd =
+    !isBusy && available > 0 && quantity > 0 && quantity <= remaining;
 
   function decreaseQuantity() {
+    setFeedback(null);
     setQuantity((current) => Math.max(1, current - 1));
   }
 
   function increaseQuantity() {
-    setQuantity((current) => Math.min(available, current + 1));
+    setFeedback(null);
+    setQuantity((current) => Math.min(Math.max(1, remaining), current + 1));
+  }
+
+  async function handleAddToCart(goToCart: boolean) {
+    if (isBusy || available === 0) return;
+
+    setFeedback(null);
+
+    if (quantity > remaining) {
+      setFeedback({
+        type: "error",
+        message:
+          remaining === 0
+            ? "Todas as unidades disponíveis já estão no seu carrinho."
+            : `Você pode adicionar mais ${remaining} unidade(s) deste NFT.`,
+      });
+      return;
+    }
+
+    try {
+      await addItem.mutateAsync({
+        nftId: nft.id,
+        quantity,
+      });
+
+      if (goToCart) {
+        await navigate({ to: "/cart" });
+        return;
+      }
+
+      setFeedback({
+        type: "success",
+        message: `${quantity} unidade(s) adicionada(s) ao carrinho!`,
+      });
+
+      setQuantity(1);
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: getErrorMessage(error),
+      });
+    }
   }
 
   const favoriteButton = (
@@ -126,7 +189,7 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
       <button
         type="button"
         onClick={decreaseQuantity}
-        disabled={quantity <= 1 || available === 0}
+        disabled={isBusy || quantity <= 1 || remaining === 0}
         aria-label="Diminuir quantidade"
         className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d8924c] text-[#150e0b] disabled:opacity-40"
       >
@@ -140,7 +203,7 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
       <button
         type="button"
         onClick={increaseQuantity}
-        disabled={quantity >= available}
+        disabled={isBusy || quantity >= remaining}
         aria-label="Aumentar quantidade"
         className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d8924c] text-[#150e0b] disabled:opacity-40"
       >
@@ -156,6 +219,7 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
 
         <div className="text-right">
           <span className="block text-xs text-[#b99b80]">Total</span>
+
           <strong className="text-lg text-[#d8924c]">
             {available === 0 ? "0" : totalPrice} ETH
           </strong>
@@ -165,27 +229,54 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
       <div className="grid grid-cols-[1fr_auto] gap-3">
         <button
           type="button"
-          disabled
-          title="Disponível após a integração do carrinho"
+          onClick={() => void handleAddToCart(true)}
+          disabled={!canAdd}
           className="rounded-full bg-[#d8924c] px-5 py-3 text-sm font-bold text-[#150e0b] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Comprar NFT
+          {addItem.isPending ? "Processando..." : "Comprar NFT"}
         </button>
 
         <button
           type="button"
-          disabled
+          onClick={() => void handleAddToCart(false)}
+          disabled={!canAdd}
           aria-label="Adicionar ao carrinho"
-          title="Disponível após a integração do carrinho"
+          title="Adicionar ao carrinho"
           className="flex items-center justify-center rounded-full border border-[#493125] px-4 text-[#d8924c] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <ShoppingCart size={19} />
         </button>
       </div>
 
+      {feedback && (
+        <p
+          role={feedback.type === "error" ? "alert" : "status"}
+          className={`mt-3 text-center text-xs ${
+            feedback.type === "error" ? "text-red-300" : "text-green-300"
+          }`}
+        >
+          {feedback.message}
+        </p>
+      )}
+
       {available === 0 && (
         <p className="mt-3 text-center text-xs text-[#d8924c]">
           NFT indisponível no momento.
+        </p>
+      )}
+
+      {available > 0 && remaining === 0 && !isCartPending && (
+        <p className="mt-3 text-center text-xs text-[#d8924c]">
+          Todas as unidades disponíveis já estão no carrinho.
+          <Link to="/cart" className="ml-1 underline">
+            Ver carrinho
+          </Link>
+        </p>
+      )}
+
+      {available > 0 && remaining > 0 && remaining < quantity && (
+        <p className="mt-3 text-center text-xs text-[#d8924c]">
+          Restam {remaining} unidade(s) para adicionar.
         </p>
       )}
     </div>
@@ -272,9 +363,11 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
             <div className="mt-4 space-y-2 text-xs text-[#b99b80] md:mt-6 md:space-y-3 md:text-sm">
               <div>
                 <span className="font-bold text-[#c9aa8c]">Edição:</span>
+
                 <span className="ml-2 rounded-full border border-[#493125] px-2 py-1">
                   #{nft.id.padStart(4, "0")}
                 </span>
+
                 <span className="ml-2 text-[#d8924c]">
                   {available > 0 ? "DISPONÍVEL" : "ESGOTADO"}
                 </span>
