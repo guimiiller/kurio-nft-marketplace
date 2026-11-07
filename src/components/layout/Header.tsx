@@ -1,12 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { Search, ShoppingCart, LogIn } from "lucide-react";
 
+import { defaultNFTFilters } from "../../features/nfts/types/nft-filters.types";
+
 export function Header() {
   return (
     <header className="hidden border-b border-[#39251b] bg-[#150e0b] md:block">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
         <Link
           to="/"
+          search={defaultNFTFilters}
           className="text-xl font-bold tracking-widest text-[#f0e8df]"
         >
           KURIO
@@ -16,7 +19,7 @@ export function Header() {
           aria-label="Navegação principal"
           className="flex items-center gap-8"
         >
-          <Link to="/" className="text-[#d8924c]">
+          <Link to="/" search={defaultNFTFilters} className="text-[#d8924c]">
             Início
           </Link>
 
