@@ -2,14 +2,14 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
-  Outlet,
 } from "@tanstack/react-router";
 
+import { AppLayout } from "../../components/layout/AppLayout";
 import { HomePage } from "../../pages/HomePage";
 import { NotFoundPage } from "../../pages/NotFoundPage";
 
 const rootRoute = createRootRoute({
-  component: () => <Outlet />,
+  component: AppLayout,
   notFoundComponent: NotFoundPage,
 });
 
@@ -23,6 +23,7 @@ const routeTree = rootRoute.addChildren([homeRoute]);
 
 export const router = createRouter({
   routeTree,
+  defaultNotFoundComponent: NotFoundPage,
 });
 
 declare module "@tanstack/react-router" {
