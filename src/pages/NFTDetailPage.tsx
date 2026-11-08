@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import axios from "axios";
+
 import {
   ArrowLeft,
-  Heart,
   Minus,
   Plus,
   ShieldCheck,
@@ -11,10 +11,13 @@ import {
   Star,
 } from "lucide-react";
 
+import { FavoriteButton } from "../components/favorites/FavoriteButton";
 import { useNFT } from "../features/nfts/hooks/use-nft";
 import { defaultNFTFilters } from "../features/nfts/types/nft-filters.types";
 import type { NFT } from "../features/nfts/types/nft.types";
+
 import { useAddCartItem, useCart } from "../features/cart/hooks/use-cart";
+
 import { multiplyEth } from "../features/cart/utils/eth";
 import { useAuthSession } from "../features/auth/hooks/use-auth-session";
 
@@ -31,7 +34,10 @@ function getErrorMessage(error: unknown): string {
 }
 
 export function NFTDetailPage() {
-  const { nftId } = useParams({ from: "/nft/$nftId" });
+  const { nftId } = useParams({
+    from: "/nft/$nftId",
+  });
+
   const { data: nft, isPending, isError, refetch } = useNFT(nftId);
 
   if (isPending) {
@@ -43,12 +49,14 @@ export function NFTDetailPage() {
       >
         <div className="grid animate-pulse gap-8 lg:grid-cols-2">
           <div className="aspect-square rounded-3xl bg-[#2b1a15]" />
+
           <div className="space-y-5">
             <div className="h-9 w-3/4 rounded bg-[#2b1a15]" />
             <div className="h-6 w-1/3 rounded bg-[#2b1a15]" />
             <div className="h-24 rounded bg-[#2b1a15]" />
           </div>
         </div>
+
         <span className="sr-only">Carregando NFT...</span>
       </main>
     );
@@ -94,7 +102,6 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
   const session = useAuthSession();
 
   const [quantity, setQuantity] = useState(1);
-  const [favorite, setFavorite] = useState(false);
 
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -102,9 +109,11 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
   } | null>(null);
 
   const addItem = useAddCartItem();
+
   const { data: cart, isPending: isCartPending } = useCart();
 
   const available = Math.max(0, nft.available);
+
   const totalPrice = multiplyEth(nft.price, quantity);
 
   const quantityInCart =
@@ -112,9 +121,10 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
 
   const remaining = Math.max(0, available - quantityInCart);
 
-  // Uma query desabilitada pode continuar com isPending=true.
-  // Para visitantes, isso não deve bloquear o botão de login.
+  // Uma query desabilitada pode continuar com
+  // isPending=true. Visitantes não devem ficar bloqueados.
   const isCartLoading = Boolean(session) && isCartPending;
+
   const isBusy = addItem.isPending || isCartLoading;
 
   const canAdd =
@@ -122,22 +132,28 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
 
   function decreaseQuantity() {
     setFeedback(null);
+
     setQuantity((current) => Math.max(1, current - 1));
   }
 
   function increaseQuantity() {
     setFeedback(null);
+
     setQuantity((current) => Math.min(Math.max(1, remaining), current + 1));
   }
 
   async function handleAddToCart(goToCart: boolean) {
-    if (isBusy || available === 0) return;
+    if (isBusy || available === 0) {
+      return;
+    }
 
     setFeedback(null);
 
-    // Não dispara requisição de carrinho sem autenticação.
     if (!session) {
-      await navigate({ to: "/login" });
+      await navigate({
+        to: "/login",
+      });
+
       return;
     }
 
@@ -160,7 +176,10 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
       });
 
       if (goToCart) {
-        await navigate({ to: "/cart" });
+        await navigate({
+          to: "/cart",
+        });
+
         return;
       }
 
@@ -179,17 +198,10 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
   }
 
   const favoriteButton = (
-    <button
-      type="button"
-      onClick={() => setFavorite((current) => !current)}
-      aria-label={
-        favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"
-      }
-      aria-pressed={favorite}
-      className="flex h-10 w-10 items-center justify-center rounded-full bg-[#352119] text-[#d8924c] transition-colors hover:bg-[#493125]"
-    >
-      <Heart size={19} fill={favorite ? "currentColor" : "none"} />
-    </button>
+    <FavoriteButton
+      nftId={nft.id}
+      className="h-10! w-10! rounded-full! border-0! bg-[#352119]! p-0! hover:bg-[#493125]!"
+    />
   );
 
   const quantityControl = (
@@ -378,9 +390,13 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
               </div>
 
               <p>ID do token: #{nft.id.padStart(4, "0")}</p>
+
               <p>Coleção: Kurio Editions</p>
+
               <p>Categoria: {nft.category}</p>
+
               <p>Blockchain: {nft.network}</p>
+
               <p>Unidades disponíveis: {available}</p>
             </div>
 

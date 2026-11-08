@@ -18,6 +18,7 @@ import { CheckoutPage } from "../../pages/CheckoutPage";
 import { OrderConfirmationPage } from "../../pages/OrderConfirmationPage";
 import { ProfilePage } from "../../pages/ProfilePage";
 import { WalletsPage } from "../../pages/WalletsPage";
+import { FavoritesPage } from "../../pages/FavoritesPage";
 import { NotFoundPage } from "../../pages/NotFoundPage";
 
 const rootRoute = createRootRoute({
@@ -95,6 +96,12 @@ const walletsRoute = createRoute({
   component: WalletsPage,
 });
 
+const favoritesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/favorites",
+  component: FavoritesPage,
+});
+
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
@@ -115,6 +122,7 @@ const routeTree = rootRoute.addChildren([
   orderConfirmationRoute,
   profileRoute,
   walletsRoute,
+  favoritesRoute,
   loginRoute,
   signupRoute,
 ]);

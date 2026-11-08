@@ -6,6 +6,7 @@ import { authHandlers } from "./handlers/auth.handlers";
 import { checkoutHandlers } from "./handlers/checkout.handlers";
 import { profileHandlers } from "./handlers/profile.handlers";
 import { walletHandlers } from "./handlers/wallet.handlers";
+import { favoritesHandlers } from "./handlers/favorites.handlers";
 
 export const worker = setupWorker(
   ...nftHandlers,
@@ -14,4 +15,5 @@ export const worker = setupWorker(
   ...checkoutHandlers,
   ...profileHandlers,
   ...walletHandlers,
+  ...favoritesHandlers,
 );
