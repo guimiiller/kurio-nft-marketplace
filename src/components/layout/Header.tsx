@@ -1,14 +1,24 @@
 import { Link } from "@tanstack/react-router";
-import { Search, ShoppingCart, LogIn } from "lucide-react";
+import { LogIn, LogOut, Search, ShoppingCart, UserRound } from "lucide-react";
 
 import { defaultNFTFilters } from "../../features/nfts/types/nft-filters.types";
+import { useCurrentUser, useLogout } from "../../features/auth/hooks/use-auth";
+import { useAuthSession } from "../../features/auth/hooks/use-auth-session";
 import { useCart } from "../../features/cart/hooks/use-cart";
 
 export function Header() {
+  const session = useAuthSession();
+  const { data: user } = useCurrentUser();
   const { data: cart } = useCart();
+  const logout = useLogout();
 
   const cartCount =
     cart?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
+
+  async function handleLogout() {
+    await logout.mutateAsync();
+    window.location.assign("/");
+  }
 
   return (
     <header className="hidden border-b border-[#39251b] bg-[#150e0b] md:block">
@@ -58,13 +68,32 @@ export function Header() {
             )}
           </Link>
 
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded bg-[#d8924c] px-4 py-2 text-sm font-bold text-[#150e0b]"
-          >
-            <LogIn size={16} />
-            Entrar
-          </button>
+          {session && user ? (
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-2 text-sm text-[#f0e8df]">
+                <UserRound size={17} />
+                {user.name.split(" ")[0]}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                disabled={logout.isPending}
+                aria-label="Sair da conta"
+                className="rounded-lg border border-[#493125] p-2 text-[#d8924c] disabled:opacity-50"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="flex items-center gap-2 rounded bg-[#d8924c] px-4 py-2 text-sm font-bold text-[#150e0b]"
+            >
+              <LogIn size={16} />
+              Entrar
+            </Link>
+          )}
         </div>
       </div>
     </header>

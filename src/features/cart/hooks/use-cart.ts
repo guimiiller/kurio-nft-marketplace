@@ -1,62 +1,84 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-  getCart,
   addCartItem,
-  updateCartItem,
+  getCart,
   removeCartItem,
+  updateCartItem,
 } from "../api/cart.api";
 
+import { useAuthSession } from "../../auth/hooks/use-auth-session";
+
 import type {
-  CartResponse,
   CartItemInput,
+  CartResponse,
   UpdateCartItemInput,
 } from "../types/cart.types";
 
-export const cartQueryKey = ["cart"] as const;
+export const cartQueryKeys = {
+  all: ["cart"] as const,
+
+  byUser: (userId: string) => ["cart", userId] as const,
+};
 
 export function useCart() {
+  const session = useAuthSession();
+
   return useQuery({
-    queryKey: cartQueryKey,
+    queryKey: cartQueryKeys.byUser(session?.userId ?? "guest"),
     queryFn: getCart,
+    enabled: Boolean(session),
+    retry: false,
   });
 }
 
 export function useAddCartItem() {
   const queryClient = useQueryClient();
+  const session = useAuthSession();
 
   return useMutation({
     mutationFn: (input: CartItemInput) => addCartItem(input),
 
     onSuccess: (cart: CartResponse) => {
-      queryClient.setQueryData(cartQueryKey, cart);
+      if (!session) return;
+
+      queryClient.setQueryData(cartQueryKeys.byUser(session.userId), cart);
     },
   });
 }
 
 export function useUpdateCartItem() {
   const queryClient = useQueryClient();
+  const session = useAuthSession();
 
   return useMutation({
-    mutationFn: ({ nftId, quantity }: { nftId: string; quantity: number }) => {
-      const input: UpdateCartItemInput = { quantity };
-      return updateCartItem(nftId, input);
-    },
+    mutationFn: ({
+      nftId,
+      input,
+    }: {
+      nftId: string;
+      input: UpdateCartItemInput;
+    }) => updateCartItem(nftId, input),
 
     onSuccess: (cart: CartResponse) => {
-      queryClient.setQueryData(cartQueryKey, cart);
+      if (!session) return;
+
+      queryClient.setQueryData(cartQueryKeys.byUser(session.userId), cart);
     },
   });
 }
 
 export function useRemoveCartItem() {
   const queryClient = useQueryClient();
+  const session = useAuthSession();
 
   return useMutation({
     mutationFn: (nftId: string) => removeCartItem(nftId),
 
     onSuccess: (cart: CartResponse) => {
-      queryClient.setQueryData(cartQueryKey, cart);
+      if (!session) return;
+
+      queryClient.setQueryData(cartQueryKeys.byUser(session.userId), cart);
     },
   });
 }

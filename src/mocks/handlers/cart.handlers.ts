@@ -1,15 +1,13 @@
 import { http, HttpResponse } from "msw";
 
 import { nfts } from "../fixtures/nfts";
+import { getAuthenticatedUserId } from "../lib/auth";
 
 import type {
   Cart,
   CartItem,
   CartResponse,
 } from "../../features/cart/types/cart.types";
-
-const SESSION_ID = "kurio-demo";
-const STORAGE_KEY = `kurio:cart:${SESSION_ID}`;
 
 function emptyCart(): Cart {
   return {
@@ -19,9 +17,13 @@ function emptyCart(): Cart {
   };
 }
 
-function readCart(): Cart {
+function getCartStorageKey(userId: string): string {
+  return `kurio:cart:user:${userId}`;
+}
+
+function readCart(userId: string): Cart {
   try {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(getCartStorageKey(userId));
 
     if (!stored) return emptyCart();
 
@@ -40,7 +42,7 @@ function readCart(): Cart {
 
     const items: CartItem[] = candidate.items.filter(
       (item) =>
-        typeof item.nftId === "string" &&
+        typeof item?.nftId === "string" &&
         Number.isSafeInteger(item.quantity) &&
         item.quantity > 0 &&
         nfts.some((nft) => nft.id === item.nftId),
@@ -60,8 +62,8 @@ function readCart(): Cart {
   }
 }
 
-function saveCart(cart: Cart): void {
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+function saveCart(userId: string, cart: Cart): void {
+  localStorage.setItem(getCartStorageKey(userId), JSON.stringify(cart));
 }
 
 function toResponse(cart: Cart): CartResponse {
@@ -96,19 +98,38 @@ function parseQuantity(value: unknown): number | null {
 
 function invalidQuantity() {
   return HttpResponse.json(
-    { message: "A quantidade deve ser um inteiro positivo." },
+    {
+      message: "A quantidade deve ser um inteiro positivo.",
+    },
     { status: 400 },
+  );
+}
+
+function unauthorized() {
+  return HttpResponse.json(
+    {
+      message: "Você precisa entrar na sua conta para acessar o carrinho.",
+    },
+    { status: 401 },
   );
 }
 
 export const cartHandlers = [
   // Consultar carrinho
-  http.get("/api/cart", () => {
-    return HttpResponse.json(toResponse(readCart()));
+  http.get("/api/cart", ({ request }) => {
+    const userId = getAuthenticatedUserId(request);
+
+    if (!userId) return unauthorized();
+
+    return HttpResponse.json(toResponse(readCart(userId)));
   }),
 
   // Adicionar NFT
   http.post("/api/cart/items", async ({ request }) => {
+    const userId = getAuthenticatedUserId(request);
+
+    if (!userId) return unauthorized();
+
     const body = (await request.json().catch(() => null)) as {
       nftId?: unknown;
       quantity?: unknown;
@@ -133,7 +154,7 @@ export const cartHandlers = [
 
     if (quantity === null) return invalidQuantity();
 
-    const cart = readCart();
+    const cart = readCart(userId);
     const existing = cart.items.find((item) => item.nftId === nftId);
 
     const nextQuantity = (existing?.quantity ?? 0) + quantity;
@@ -154,7 +175,7 @@ export const cartHandlers = [
     }
 
     cart.version += 1;
-    saveCart(cart);
+    saveCart(userId, cart);
 
     return HttpResponse.json(toResponse(cart), {
       status: 201,
@@ -163,14 +184,20 @@ export const cartHandlers = [
 
   // Atualizar quantidade
   http.patch("/api/cart/items/:nftId", async ({ params, request }) => {
+    const userId = getAuthenticatedUserId(request);
+
+    if (!userId) return unauthorized();
+
     const nftId = String(params.nftId);
-    const cart = readCart();
+    const cart = readCart(userId);
 
     const existing = cart.items.find((item) => item.nftId === nftId);
 
     if (!existing) {
       return HttpResponse.json(
-        { message: "Item não encontrado no carrinho." },
+        {
+          message: "Item não encontrado no carrinho.",
+        },
         { status: 404 },
       );
     }
@@ -203,21 +230,28 @@ export const cartHandlers = [
 
     existing.quantity = quantity;
     cart.version += 1;
-    saveCart(cart);
+
+    saveCart(userId, cart);
 
     return HttpResponse.json(toResponse(cart));
   }),
 
   // Remover NFT
-  http.delete("/api/cart/items/:nftId", ({ params }) => {
+  http.delete("/api/cart/items/:nftId", ({ params, request }) => {
+    const userId = getAuthenticatedUserId(request);
+
+    if (!userId) return unauthorized();
+
     const nftId = String(params.nftId);
-    const cart = readCart();
+    const cart = readCart(userId);
 
     const exists = cart.items.some((item) => item.nftId === nftId);
 
     if (!exists) {
       return HttpResponse.json(
-        { message: "Item não encontrado no carrinho." },
+        {
+          message: "Item não encontrado no carrinho.",
+        },
         { status: 404 },
       );
     }
@@ -225,7 +259,7 @@ export const cartHandlers = [
     cart.items = cart.items.filter((item) => item.nftId !== nftId);
 
     cart.version += 1;
-    saveCart(cart);
+    saveCart(userId, cart);
 
     return HttpResponse.json(toResponse(cart));
   }),

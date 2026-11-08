@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import axios from "axios";
-
 import {
   ArrowLeft,
   Heart,
@@ -15,9 +14,9 @@ import {
 import { useNFT } from "../features/nfts/hooks/use-nft";
 import { defaultNFTFilters } from "../features/nfts/types/nft-filters.types";
 import type { NFT } from "../features/nfts/types/nft.types";
-
 import { useAddCartItem, useCart } from "../features/cart/hooks/use-cart";
 import { multiplyEth } from "../features/cart/utils/eth";
+import { useAuthSession } from "../features/auth/hooks/use-auth-session";
 
 function getErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
@@ -33,7 +32,6 @@ function getErrorMessage(error: unknown): string {
 
 export function NFTDetailPage() {
   const { nftId } = useParams({ from: "/nft/$nftId" });
-
   const { data: nft, isPending, isError, refetch } = useNFT(nftId);
 
   if (isPending) {
@@ -51,7 +49,6 @@ export function NFTDetailPage() {
             <div className="h-24 rounded bg-[#2b1a15]" />
           </div>
         </div>
-
         <span className="sr-only">Carregando NFT...</span>
       </main>
     );
@@ -94,9 +91,11 @@ export function NFTDetailPage() {
 
 function NFTDetailContent({ nft }: { nft: NFT }) {
   const navigate = useNavigate();
+  const session = useAuthSession();
 
   const [quantity, setQuantity] = useState(1);
   const [favorite, setFavorite] = useState(false);
+
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
@@ -113,7 +112,11 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
 
   const remaining = Math.max(0, available - quantityInCart);
 
-  const isBusy = addItem.isPending || isCartPending;
+  // Uma query desabilitada pode continuar com isPending=true.
+  // Para visitantes, isso não deve bloquear o botão de login.
+  const isCartLoading = Boolean(session) && isCartPending;
+  const isBusy = addItem.isPending || isCartLoading;
+
   const canAdd =
     !isBusy && available > 0 && quantity > 0 && quantity <= remaining;
 
@@ -132,6 +135,12 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
 
     setFeedback(null);
 
+    // Não dispara requisição de carrinho sem autenticação.
+    if (!session) {
+      await navigate({ to: "/login" });
+      return;
+    }
+
     if (quantity > remaining) {
       setFeedback({
         type: "error",
@@ -140,6 +149,7 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
             ? "Todas as unidades disponíveis já estão no seu carrinho."
             : `Você pode adicionar mais ${remaining} unidade(s) deste NFT.`,
       });
+
       return;
     }
 
@@ -265,7 +275,7 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
         </p>
       )}
 
-      {available > 0 && remaining === 0 && !isCartPending && (
+      {available > 0 && remaining === 0 && !isCartLoading && session && (
         <p className="mt-3 text-center text-xs text-[#d8924c]">
           Todas as unidades disponíveis já estão no carrinho.
           <Link to="/cart" className="ml-1 underline">
@@ -284,7 +294,6 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 pb-24 pt-4 md:px-6 md:pb-16 md:pt-8">
-      {/* Navegação desktop */}
       <nav aria-label="Caminho de navegação" className="mb-6 hidden md:block">
         <Link
           to="/"
@@ -296,10 +305,8 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
         </Link>
       </nav>
 
-      {/* Card principal */}
       <div className="overflow-hidden rounded-[28px] bg-[#241710] md:overflow-visible md:rounded-none md:bg-transparent">
         <div className="grid gap-0 md:gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-12">
-          {/* Galeria */}
           <section
             aria-label={`Galeria de ${nft.name}`}
             className="min-w-0 p-3 md:p-0"
@@ -312,7 +319,6 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
                 fetchPriority="high"
               />
 
-              {/* Voltar mobile */}
               <Link
                 to="/"
                 search={defaultNFTFilters}
@@ -325,7 +331,6 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
               <div className="absolute right-3 top-3">{favoriteButton}</div>
             </div>
 
-            {/* Miniaturas apenas desktop */}
             <div className="mt-4 hidden grid-cols-4 gap-3 md:grid">
               {[0, 1, 2, 3].map((index) => (
                 <div
@@ -342,7 +347,6 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
             </div>
           </section>
 
-          {/* Informações */}
           <section className="min-w-0 px-4 pb-4 pt-2 md:px-0 md:py-0">
             <div className="flex items-start justify-between gap-3">
               <h1 className="min-w-0 text-xl font-bold leading-tight text-[#f0e8df] md:text-4xl">
@@ -390,7 +394,6 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
         </div>
       </div>
 
-      {/* Detalhes adicionais desktop */}
       <section className="mt-12 hidden border-t border-[#493125] pt-8 md:block">
         <h2 className="text-xl font-bold text-[#f0e8df]">Detalhes do NFT</h2>
 

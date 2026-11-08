@@ -13,6 +13,7 @@ import { AppLayout } from "../../components/layout/AppLayout";
 import { HomePage } from "../../pages/HomePage";
 import { NFTDetailPage } from "../../pages/NFTDetailPage";
 import { CartPage } from "../../pages/CartPage";
+import { AuthPage } from "../../pages/AuthPage";
 import { NotFoundPage } from "../../pages/NotFoundPage";
 
 const rootRoute = createRootRoute({
@@ -66,7 +67,25 @@ const cartRoute = createRoute({
   component: CartPage,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, nftDetailRoute, cartRoute]);
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/login",
+  component: () => <AuthPage mode="login" />,
+});
+
+const signupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/signup",
+  component: () => <AuthPage mode="signup" />,
+});
+
+const routeTree = rootRoute.addChildren([
+  homeRoute,
+  nftDetailRoute,
+  cartRoute,
+  loginRoute,
+  signupRoute,
+]);
 
 export const router = createRouter({
   routeTree,

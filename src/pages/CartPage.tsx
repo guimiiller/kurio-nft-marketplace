@@ -48,7 +48,10 @@ export function CartPage() {
     setActionError(null);
 
     try {
-      await updateItem.mutateAsync({ nftId, quantity });
+      await updateItem.mutateAsync({
+        nftId,
+        input: { quantity },
+      });
     } catch (error) {
       setActionError(getErrorMessage(error));
     }
