@@ -1,8 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-
 import { AppProviders } from "./app/providers/AppProviders";
-
 import "./index.css";
 
 async function enableMocking() {
@@ -12,7 +10,17 @@ async function enableMocking() {
 
   const { worker } = await import("./mocks/browser");
 
-  await worker.start();
+  await worker.start({
+    onUnhandledRequest(request, print) {
+      const url = new URL(request.url);
+
+      if (!url.pathname.startsWith("/api/")) {
+        return;
+      }
+
+      print.warning();
+    },
+  });
 }
 
 async function bootstrap() {
