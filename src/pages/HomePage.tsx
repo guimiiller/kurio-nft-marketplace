@@ -277,17 +277,17 @@ function HomePageContent({ filters }: { filters: NFTFilters }) {
       )}
 
       {/* Hero */}
-      <section className="relative mb-5 min-h-44.5 overflow-hidden rounded-2xl bg-[#382318] sm:min-h-51.25 md:mb-10 md:grid md:min-h-0 md:grid-cols-2 md:items-center md:gap-6 md:bg-transparent">
-        <div className="relative z-10 w-[66%] px-3 py-4 sm:px-5 md:w-full md:px-5 md:py-0">
+      <section className="relative mb-5 min-h-42.5overflow-hidden rounded-2xl bg-[#382318] sm:min-h-51.25 md:mb-8 md:grid md:min-h-0 md:grid-cols-[1fr_0.9fr] md:items-center md:gap-8 md:bg-transparent">
+        <div className="relative z-10 w-[68%] px-4 py-4 sm:px-5 sm:py-6 md:w-full md:px-5 md:py-6 lg:px-6">
           <p className="mb-1 text-[9px] tracking-wide text-[#e1bd94] sm:text-xs md:mb-3">
             Bem-vindo à Kurio
           </p>
 
-          <h1 className="text-[13px] font-bold uppercase leading-[1.3] text-[#f0e8df] sm:text-lg md:max-w-xl md:text-4xl lg:text-5xl">
+          <h1 className="max-w-57.5 text-[13px] font-bold uppercase leading-[1.3] text-[#f0e8df] sm:max-w-[320px] sm:text-lg md:max-w-xl md:text-3xl lg:text-[42px] lg:leading-[1.2]">
             Seja dono do futuro da arte digital
           </h1>
 
-          <p className="mt-2 line-clamp-3 text-[9px] leading-normal text-[#c9aa8c] sm:text-xs md:mt-4 md:line-clamp-none md:max-w-lg md:text-sm md:leading-6">
+          <p className="mt-2 line-clamp-3 text-[9px] leading-relaxed text-[#c9aa8c] sm:text-xs md:mt-4 md:line-clamp-none md:max-w-lg md:text-sm md:leading-6">
             Descubra NFTs selecionados de criadores emergentes e consagrados.
             Colecione arte digital rara, apoie artistas e tenha uma parte da
             cultura da internet.
@@ -295,22 +295,22 @@ function HomePageContent({ filters }: { filters: NFTFilters }) {
 
           <a
             href="#catalogo"
-            className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#d8924c] hover:text-[#e6a866] sm:text-xs md:mt-5md:gap-2 md:rounded-md md:bg-[#d8924c] md:px-5 md:py-3 md:text-sm md:text-[#150e0b]"
+            className="mt-3 inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#d8924c] transition-colors hover:text-[#e6a866] sm:text-xs md:mt-5 md:gap-2 md:rounded-md md:bg-[#d8924c] md:px-5 md:py-3 md:text-sm md:text-[#150e0b] md:hover:bg-[#e6a866] md:hover:text-[#150e0b]"
           >
             Explorar NFTs
             <ArrowRight size={13} aria-hidden="true" />
           </a>
         </div>
 
-        <div className="absolute inset-y-0 right-0 w-[48%] md:relative md:inset-auto md:w-full md:overflow-hidden md:rounded-2xl">
+        <div className="absolute inset-y-0 right-0 w-[47%] md:relative md:inset-auto md:w-full md:overflow-hidden md:rounded-2xl">
           <img
             src="/images/emerald-ape.png"
             alt="Emerald Ape, macaco com óculos verdes e jaqueta verde"
-            className="h-full w-full object-cover object-center md:aspect-square md:h-auto md:object-contain"
+            className="h-full w-full object-cover object-center md:aspect-5/4 md:h-auto md:object-cover"
             fetchPriority="high"
           />
 
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-linear-to-r from-[#382318] to-transparent md:hidden" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-14 bg-linear-to-r from-[#382318] to-transparent md:hidden" />
         </div>
       </section>
 

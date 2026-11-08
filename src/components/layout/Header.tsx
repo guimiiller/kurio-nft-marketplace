@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
@@ -21,6 +21,17 @@ export function Header() {
   const { data: user } = useCurrentUser();
   const { data: cart } = useCart();
   const logout = useLogout();
+
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+
+  const hash = useRouterState({
+    select: (state) => state.location.hash,
+  });
+
+  const isHome = pathname === "/" && hash !== "catalogo";
+  const isMarket = pathname === "/" && hash === "catalogo";
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -66,6 +77,12 @@ export function Header() {
   const menuLinkClass =
     "flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-[#f0e8df] transition-colors hover:bg-[#352119] hover:text-[#d8924c]";
 
+  const navLinkClass =
+    "relative flex h-full items-center border-b-2 text-sm transition-colors hover:text-[#d8924c]";
+
+  const activeNavClass = "border-[#d8924c] text-[#d8924c]";
+  const inactiveNavClass = "border-transparent text-[#f0e8df]";
+
   return (
     <header className="hidden border-b border-[#39251b] bg-[#150e0b] md:block">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
@@ -79,9 +96,16 @@ export function Header() {
 
         <nav
           aria-label="Navegação principal"
-          className="flex items-center gap-8"
+          className="flex h-full items-center gap-8"
         >
-          <Link to="/" search={defaultNFTFilters} className="text-[#d8924c]">
+          <Link
+            to="/"
+            search={defaultNFTFilters}
+            className={`${navLinkClass} ${
+              isHome ? activeNavClass : inactiveNavClass
+            }`}
+            aria-current={isHome ? "page" : undefined}
+          >
             Início
           </Link>
 
@@ -89,13 +113,16 @@ export function Header() {
             to="/"
             search={defaultNFTFilters}
             hash="catalogo"
-            className="text-[#f0e8df] hover:text-[#d8924c]"
+            className={`${navLinkClass} ${
+              isMarket ? activeNavClass : inactiveNavClass
+            }`}
+            aria-current={isMarket ? "page" : undefined}
           >
             Mercado
           </Link>
 
-          <span className="text-[#f0e8df]">Criadores</span>
-          <span className="text-[#f0e8df]">Aprenda</span>
+          <span className="text-sm text-[#f0e8df]">Criadores</span>
+          <span className="text-sm text-[#f0e8df]">Aprenda</span>
         </nav>
 
         <div className="flex items-center gap-5">
