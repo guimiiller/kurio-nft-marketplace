@@ -16,6 +16,8 @@ import { CartPage } from "../../pages/CartPage";
 import { AuthPage } from "../../pages/AuthPage";
 import { CheckoutPage } from "../../pages/CheckoutPage";
 import { OrderConfirmationPage } from "../../pages/OrderConfirmationPage";
+import { ProfilePage } from "../../pages/ProfilePage";
+import { WalletsPage } from "../../pages/WalletsPage";
 import { NotFoundPage } from "../../pages/NotFoundPage";
 
 const rootRoute = createRootRoute({
@@ -81,6 +83,18 @@ const orderConfirmationRoute = createRoute({
   component: OrderConfirmationPage,
 });
 
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/profile",
+  component: ProfilePage,
+});
+
+const walletsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/wallets",
+  component: WalletsPage,
+});
+
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
@@ -99,6 +113,8 @@ const routeTree = rootRoute.addChildren([
   cartRoute,
   checkoutRoute,
   orderConfirmationRoute,
+  profileRoute,
+  walletsRoute,
   loginRoute,
   signupRoute,
 ]);
