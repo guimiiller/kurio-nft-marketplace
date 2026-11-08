@@ -1,6 +1,8 @@
 import { http, HttpResponse } from "msw";
+
 import { nfts } from "../fixtures/nfts";
 import { getAuthenticatedUserId } from "../lib/auth";
+import { emitMockNFTUpdated, emitMockOrderUpdated } from "../realtime/events";
 
 import { ethToWei, weiToEth } from "../../features/cart/utils/eth";
 
@@ -48,7 +50,10 @@ function emptyStore(): CheckoutStore {
 function readStore(): CheckoutStore {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return emptyStore();
+
+    if (!raw) {
+      return emptyStore();
+    }
 
     const parsed = JSON.parse(raw) as Partial<CheckoutStore>;
 
@@ -121,7 +126,9 @@ function readCart(userId: string): Cart {
 function availableStock(nftId: string, store: CheckoutStore): number {
   const nft = nfts.find((item) => item.id === nftId);
 
-  if (!nft) return 0;
+  if (!nft) {
+    return 0;
+  }
 
   return Math.max(0, nft.available - (store.sold[nftId] ?? 0));
 }
@@ -236,7 +243,10 @@ function sameQuoteValues(first: CheckoutQuote, second: CheckoutQuote): boolean {
 export const checkoutHandlers = [
   http.post("/api/checkout/quote", async ({ request }) => {
     const userId = getAuthenticatedUserId(request);
-    if (!userId) return unauthorized();
+
+    if (!userId) {
+      return unauthorized();
+    }
 
     const body = (await request.json().catch(() => null)) as {
       couponCode?: unknown;
@@ -260,6 +270,7 @@ export const checkoutHandlers = [
     }
 
     const store = readStore();
+
     const result = buildQuote(userId, couponCode || null, store);
 
     if (result instanceof Response) {
@@ -280,7 +291,10 @@ export const checkoutHandlers = [
 
   http.post("/api/orders", async ({ request }) => {
     const userId = getAuthenticatedUserId(request);
-    if (!userId) return unauthorized();
+
+    if (!userId) {
+      return unauthorized();
+    }
 
     const idempotencyKey = request.headers.get("Idempotency-Key")?.trim();
 
@@ -333,9 +347,7 @@ export const checkoutHandlers = [
 
     const existing = store.idempotency[idempotencyStorageKey];
 
-    // Idempotência vem ANTES de verificar a cotação.
-    // Assim, uma repetição retorna o pedido original,
-    // mesmo depois de o carrinho ter sido esvaziado.
+    // Repetir a mesma operação retorna o pedido original.
     if (existing) {
       if (existing.fingerprint !== fingerprint) {
         return errorResponse(
@@ -352,6 +364,7 @@ export const checkoutHandlers = [
         return errorResponse("Pedido anterior não encontrado.", 409);
       }
 
+      // Não emite eventos nem desconta estoque novamente.
       return HttpResponse.json(previousOrder);
     }
 
@@ -378,8 +391,7 @@ export const checkoutHandlers = [
       );
     }
 
-    // Recalcula preços, taxas, descontos e estoque.
-    // Não confia nos valores recebidos do cliente.
+    // Recalcula preços, descontos, taxas e estoque.
     const currentQuote = buildQuote(userId, quote.couponCode, store);
 
     if (currentQuote instanceof Response) {
@@ -418,7 +430,7 @@ export const checkoutHandlers = [
       orderId: order.id,
     };
 
-    // Persiste pedido e estoque antes de limpar carrinho.
+    // Persiste pedido e estoque antes de emitir eventos.
     saveStore(store);
 
     localStorage.setItem(
@@ -430,6 +442,33 @@ export const checkoutHandlers = [
       } satisfies Cart),
     );
 
+    // Notifica clientes conectados sobre os NFTs alterados.
+    for (const item of quote.items) {
+      const nft = nfts.find((entry) => entry.id === item.nftId);
+
+      if (!nft) {
+        continue;
+      }
+
+      const available = availableStock(nft.id, store);
+      const sold = Math.max(0, nft.available - available);
+
+      emitMockNFTUpdated({
+        nft: {
+          ...nft,
+          available,
+          version: nft.version + sold,
+        },
+      });
+    }
+
+    // O cliente só processa pedidos do usuário autenticado.
+    emitMockOrderUpdated({
+      orderId: order.id,
+      userId,
+      version: 1,
+    });
+
     return HttpResponse.json(order, {
       status: 201,
     });
@@ -437,7 +476,10 @@ export const checkoutHandlers = [
 
   http.get("/api/orders/:orderId", ({ request, params }) => {
     const userId = getAuthenticatedUserId(request);
-    if (!userId) return unauthorized();
+
+    if (!userId) {
+      return unauthorized();
+    }
 
     const store = readStore();
 

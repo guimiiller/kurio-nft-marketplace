@@ -1,7 +1,21 @@
 import { http, HttpResponse } from "msw";
 
 import { nfts } from "../fixtures/nfts";
+import { getAvailableStock } from "../lib/stock";
+
 import type { NFTSort } from "../../features/nfts/types/nft-filters.types";
+import type { NFT } from "../../features/nfts/types/nft.types";
+
+function getCurrentNFT(nft: NFT): NFT {
+  const available = getAvailableStock(nft.id);
+  const sold = Math.max(0, nft.available - available);
+
+  return {
+    ...nft,
+    available,
+    version: nft.version + sold,
+  };
+}
 
 export const nftHandlers = [
   http.get("/api/nfts", ({ request }) => {
@@ -46,6 +60,7 @@ export const nftHandlers = [
     }
 
     const filtered = nfts
+      .map(getCurrentNFT)
       .filter((nft) => {
         const price = Number(nft.price);
 
@@ -88,6 +103,6 @@ export const nftHandlers = [
       );
     }
 
-    return HttpResponse.json(nft);
+    return HttpResponse.json(getCurrentNFT(nft));
   }),
 ];

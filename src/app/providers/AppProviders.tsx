@@ -4,6 +4,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { router } from "../router";
+import { RealtimeSync } from "../../features/realtime/components/RealtimeSync";
 
 export function AppProviders() {
   const [queryClient] = useState(
@@ -21,7 +22,10 @@ export function AppProviders() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <RealtimeSync />
+
       <RouterProvider router={router} />
+
       {import.meta.env.DEV && <TanStackRouterDevtools router={router} />}
     </QueryClientProvider>
   );
