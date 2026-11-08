@@ -17,7 +17,6 @@ import { defaultNFTFilters } from "../features/nfts/types/nft-filters.types";
 import type { NFT } from "../features/nfts/types/nft.types";
 
 import { useAddCartItem, useCart } from "../features/cart/hooks/use-cart";
-
 import { multiplyEth } from "../features/cart/utils/eth";
 import { useAuthSession } from "../features/auth/hooks/use-auth-session";
 
@@ -109,11 +108,9 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
   } | null>(null);
 
   const addItem = useAddCartItem();
-
   const { data: cart, isPending: isCartPending } = useCart();
 
   const available = Math.max(0, nft.available);
-
   const totalPrice = multiplyEth(nft.price, quantity);
 
   const quantityInCart =
@@ -121,10 +118,7 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
 
   const remaining = Math.max(0, available - quantityInCart);
 
-  // Uma query desabilitada pode continuar com
-  // isPending=true. Visitantes não devem ficar bloqueados.
   const isCartLoading = Boolean(session) && isCartPending;
-
   const isBusy = addItem.isPending || isCartLoading;
 
   const canAdd =
@@ -132,13 +126,11 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
 
   function decreaseQuantity() {
     setFeedback(null);
-
     setQuantity((current) => Math.max(1, current - 1));
   }
 
   function increaseQuantity() {
     setFeedback(null);
-
     setQuantity((current) => Math.min(Math.max(1, remaining), current + 1));
   }
 
@@ -150,10 +142,7 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
     setFeedback(null);
 
     if (!session) {
-      await navigate({
-        to: "/login",
-      });
-
+      await navigate({ to: "/login" });
       return;
     }
 
@@ -176,10 +165,7 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
       });
 
       if (goToCart) {
-        await navigate({
-          to: "/cart",
-        });
-
+        await navigate({ to: "/cart" });
         return;
       }
 
@@ -200,12 +186,12 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
   const favoriteButton = (
     <FavoriteButton
       nftId={nft.id}
-      className="h-10! w-10! rounded-full! border-0! bg-[#352119]! p-0! hover:bg-[#493125]!"
+      className="h-9! w-9! rounded-full! border-0! bg-[#352119]! p-0! hover:bg-[#493125]! md:h-10! md:w-10!"
     />
   );
 
   const quantityControl = (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2 md:gap-3">
       <span className="text-xs font-bold text-[#b99b80]">Qtd.</span>
 
       <button
@@ -213,9 +199,9 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
         onClick={decreaseQuantity}
         disabled={isBusy || quantity <= 1 || remaining === 0}
         aria-label="Diminuir quantidade"
-        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d8924c] text-[#150e0b] disabled:opacity-40"
+        className="flex h-6 w-6 items-center justify-center rounded-full bg-[#d8924c] text-[#150e0b] disabled:opacity-40 md:h-7 md:w-7"
       >
-        <Minus size={14} />
+        <Minus size={13} />
       </button>
 
       <output className="min-w-4 text-center text-sm font-bold">
@@ -227,33 +213,35 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
         onClick={increaseQuantity}
         disabled={isBusy || quantity >= remaining}
         aria-label="Aumentar quantidade"
-        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d8924c] text-[#150e0b] disabled:opacity-40"
+        className="flex h-6 w-6 items-center justify-center rounded-full bg-[#d8924c] text-[#150e0b] disabled:opacity-40 md:h-7 md:w-7"
       >
-        <Plus size={14} />
+        <Plus size={13} />
       </button>
     </div>
   );
 
   const purchasePanel = (
-    <div className="rounded-2xl bg-[#2b1a15] p-4 md:border md:border-[#493125] md:p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="rounded-xl bg-[#2b1a15] p-3 md:rounded-2xl md:border md:border-[#493125] md:p-5">
+      <div className="mb-3 flex items-center justify-between gap-2 md:mb-4">
         {quantityControl}
 
         <div className="text-right">
-          <span className="block text-xs text-[#b99b80]">Total</span>
+          <span className="block text-[10px] text-[#b99b80] md:text-xs">
+            Total
+          </span>
 
-          <strong className="text-lg text-[#d8924c]">
+          <strong className="text-base text-[#d8924c] md:text-lg">
             {available === 0 ? "0" : totalPrice} ETH
           </strong>
         </div>
       </div>
 
-      <div className="grid grid-cols-[1fr_auto] gap-3">
+      <div className="grid grid-cols-[1fr_auto] gap-2 md:gap-3">
         <button
           type="button"
           onClick={() => void handleAddToCart(true)}
           disabled={!canAdd}
-          className="rounded-full bg-[#d8924c] px-5 py-3 text-sm font-bold text-[#150e0b] disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-full bg-[#d8924c] px-4 py-2.5 text-xs font-bold text-[#150e0b] disabled:cursor-not-allowed disabled:opacity-60 md:px-5 md:py-3 md:text-sm"
         >
           {addItem.isPending ? "Processando..." : "Comprar NFT"}
         </button>
@@ -264,9 +252,9 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
           disabled={!canAdd}
           aria-label="Adicionar ao carrinho"
           title="Adicionar ao carrinho"
-          className="flex items-center justify-center rounded-full border border-[#493125] px-4 text-[#d8924c] disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex items-center justify-center rounded-full border border-[#493125] px-3 text-[#d8924c] disabled:cursor-not-allowed disabled:opacity-60 md:px-4"
         >
-          <ShoppingCart size={19} />
+          <ShoppingCart size={18} />
         </button>
       </div>
 
@@ -305,7 +293,7 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
   );
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 pb-24 pt-4 md:px-6 md:pb-16 md:pt-8">
+    <main className="mx-auto w-full max-w-7xl px-4 pb-24 pt-3 md:px-6 md:pb-16 md:pt-8">
       <nav aria-label="Caminho de navegação" className="mb-6 hidden md:block">
         <Link
           to="/"
@@ -317,17 +305,18 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
         </Link>
       </nav>
 
-      <div className="overflow-hidden rounded-[28px] bg-[#241710] md:overflow-visible md:rounded-none md:bg-transparent">
+      <div className="overflow-hidden rounded-3xl bg-[#241710] md:overflow-visible md:rounded-none md:bg-transparent">
         <div className="grid gap-0 md:gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-12">
+          {/* Galeria */}
           <section
             aria-label={`Galeria de ${nft.name}`}
-            className="min-w-0 p-3 md:p-0"
+            className="min-w-0 p-3 pb-0 md:p-0"
           >
-            <div className="relative overflow-hidden rounded-[22px] bg-[#2b1a15]">
+            <div className="relative mx-auto max-w-90 overflow-hidden rounded-[18px] bg-[#2b1a15] md:max-w-none md:rounded-[22px]">
               <img
                 src={nft.image}
                 alt={`Arte do NFT ${nft.name}`}
-                className="aspect-square w-full object-cover"
+                className="aspect-1.25/1 w-full object-cover object-center md:aspect-square"
                 fetchPriority="high"
               />
 
@@ -335,9 +324,9 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
                 to="/"
                 search={defaultNFTFilters}
                 aria-label="Voltar ao mercado"
-                className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#352119]/90 text-[#d8924c] md:hidden"
+                className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#352119]/90 text-[#d8924c] md:hidden"
               >
-                <ArrowLeft size={19} />
+                <ArrowLeft size={18} />
               </Link>
 
               <div className="absolute right-3 top-3">{favoriteButton}</div>
@@ -359,24 +348,25 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
             </div>
           </section>
 
-          <section className="min-w-0 px-4 pb-4 pt-2 md:px-0 md:py-0">
-            <div className="flex items-start justify-between gap-3">
-              <h1 className="min-w-0 text-xl font-bold leading-tight text-[#f0e8df] md:text-4xl">
+          {/* Informações */}
+          <section className="min-w-0 px-3 pb-4 pt-3 md:px-0 md:py-0">
+            <div className="flex items-start justify-between gap-2">
+              <h1 className="min-w-0 text-lg font-bold leading-tight text-[#f0e8df] md:text-4xl">
                 {nft.name}
               </h1>
 
-              <span className="flex shrink-0 items-center gap-1 rounded-full border border-[#80532f] px-2 py-1 text-[11px] text-[#d8924c]">
-                <Star size={12} fill="currentColor" />
+              <span className="flex shrink-0 items-center gap-1 rounded-full border border-[#80532f] px-2 py-1 text-[10px] text-[#d8924c] md:text-[11px]">
+                <Star size={11} fill="currentColor" />
                 Colecionável
               </span>
             </div>
 
-            <p className="mt-3 text-xs leading-5 text-[#c9aa8c] md:mt-5 md:text-sm md:leading-7">
+            <p className="mt-2 text-[11px] leading-[1.6] text-[#c9aa8c] md:mt-5 md:text-sm md:leading-7">
               Um colecionável digital da coleção Kurio Editions, disponível na
               rede {nft.network}.
             </p>
 
-            <div className="mt-4 space-y-2 text-xs text-[#b99b80] md:mt-6 md:space-y-3 md:text-sm">
+            <div className="mt-3 space-y-1.5 text-[11px] text-[#b99b80] md:mt-6 md:space-y-3 md:text-sm">
               <div>
                 <span className="font-bold text-[#c9aa8c]">Edição:</span>
 
@@ -390,17 +380,13 @@ function NFTDetailContent({ nft }: { nft: NFT }) {
               </div>
 
               <p>ID do token: #{nft.id.padStart(4, "0")}</p>
-
               <p>Coleção: Kurio Editions</p>
-
               <p>Categoria: {nft.category}</p>
-
               <p>Blockchain: {nft.network}</p>
-
               <p>Unidades disponíveis: {available}</p>
             </div>
 
-            <div className="mt-5 md:mt-8">{purchasePanel}</div>
+            <div className="mt-4 md:mt-8">{purchasePanel}</div>
 
             <div className="mt-4 hidden items-center gap-2 text-xs text-[#b99b80] md:flex">
               <ShieldCheck size={18} className="text-[#d8924c]" />
