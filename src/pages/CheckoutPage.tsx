@@ -54,7 +54,8 @@ export function CheckoutPage() {
 
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
-  const [quote, setQuote] = useState<CheckoutQuote | null>(null);
+  const [quoteResult, setQuoteResult] = useState<{ fingerprint: string; value: CheckoutQuote } | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
 
@@ -65,7 +66,6 @@ export function CheckoutPage() {
 
   const idempotencyKey = useRef<string>(crypto.randomUUID());
   const quoteRequestSequence = useRef(0);
-  const quoteFingerprint = useRef<string | null>(null);
 
   const cartVersion = cart?.version;
   const cartHasItems = Boolean(cart?.items.length);
@@ -79,55 +79,52 @@ export function CheckoutPage() {
       })
     : null;
 
+  const currentFingerprint = session && cartHasItems && cartFingerprint
+    ? JSON.stringify({
+        userId: session.userId,
+        cart: cartFingerprint,
+        coupon: appliedCoupon,
+      })
+    : null;
+
+  const quote =
+    quoteResult?.fingerprint === currentFingerprint
+      ? quoteResult.value
+      : null;
+
   useEffect(() => {
-    if (!session || !cartHasItems || !cartFingerprint) {
-      setQuote(null);
-      quoteFingerprint.current = null;
-      return;
-    }
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
-    const fingerprint = JSON.stringify({
-      userId: session.userId,
-      cart: cartFingerprint,
-      coupon: appliedCoupon,
-    });
+  useEffect(() => {
+    if (!currentFingerprint) return;
 
-    if (quoteFingerprint.current === fingerprint) return;
-    quoteFingerprint.current = fingerprint;
-
+    const fingerprint = currentFingerprint;
     const sequence = ++quoteRequestSequence.current;
-    setQuote(null);
-    setQuoteError(null);
-    setOrderError(null);
-    idempotencyKey.current = crypto.randomUUID();
+    let cancelled = false;
 
     void requestQuote({ couponCode: appliedCoupon })
       .then((result) => {
-        if (sequence !== quoteRequestSequence.current) return;
-        setQuote(result);
+        if (cancelled || sequence !== quoteRequestSequence.current) return;
+        setQuoteResult({ fingerprint, value: result });
+        setQuoteError(null);
       })
       .catch((error: unknown) => {
-        if (sequence !== quoteRequestSequence.current) return;
+        if (cancelled || sequence !== quoteRequestSequence.current) return;
         setQuoteError(errorMessage(error));
       });
 
     return () => {
-      ++quoteRequestSequence.current;
-      quoteFingerprint.current = null;
+      cancelled = true;
     };
-  }, [
-    session?.userId,
-    cartFingerprint,
-    cartHasItems,
-    appliedCoupon,
-    requestQuote,
-  ]);
+  }, [currentFingerprint, appliedCoupon, requestQuote]);
 
   async function refreshQuote() {
-    if (!session || !cartHasItems) return;
+    if (!session || !cartHasItems || !currentFingerprint) return;
 
     const sequence = ++quoteRequestSequence.current;
-    setQuote(null);
+    setQuoteResult(null);
     setQuoteError(null);
     setOrderError(null);
     idempotencyKey.current = crypto.randomUUID();
@@ -138,7 +135,7 @@ export function CheckoutPage() {
       });
 
       if (sequence === quoteRequestSequence.current) {
-        setQuote(result);
+        setQuoteResult({ fingerprint: currentFingerprint, value: result });
       }
     } catch (error) {
       if (sequence === quoteRequestSequence.current) {
@@ -155,6 +152,8 @@ export function CheckoutPage() {
       return;
     }
 
+    setQuoteError(null);
+    setOrderError(null);
     setAppliedCoupon(normalized);
   }
 
@@ -267,7 +266,7 @@ export function CheckoutPage() {
     );
   }
 
-  const quoteExpired = quote ? Date.now() >= quote.expiresAt : false;
+  const quoteExpired = quote ? now >= quote.expiresAt : false;
 
   return (
     <main className="min-h-screen bg-[#150e0b] px-4 pb-24 pt-8 text-[#f0e8df] md:px-6 md:py-12">

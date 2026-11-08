@@ -1,5 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   Search,
   SlidersHorizontal,
@@ -25,18 +25,22 @@ const inputClass =
 
 export function HomePage() {
   const filters = useSearch({ from: "/" });
+  const filterKey = JSON.stringify([
+    filters.search,
+    filters.minPrice,
+    filters.maxPrice,
+  ]);
+
+  return <HomePageContent key={filterKey} filters={filters} />;
+}
+
+function HomePageContent({ filters }: { filters: NFTFilters }) {
   const navigate = useNavigate({ from: "/" });
 
   const [searchInput, setSearchInput] = useState(filters.search);
   const [minPriceInput, setMinPriceInput] = useState(filters.minPrice);
   const [maxPriceInput, setMaxPriceInput] = useState(filters.maxPrice);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-
-  useEffect(() => {
-    setSearchInput(filters.search);
-    setMinPriceInput(filters.minPrice);
-    setMaxPriceInput(filters.maxPrice);
-  }, [filters.search, filters.minPrice, filters.maxPrice]);
 
   const { data, isPending, isError, refetch } = useNFTs(filters);
 
@@ -291,7 +295,7 @@ export function HomePage() {
 
           <a
             href="#catalogo"
-            className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#d8924c] hover:text-[#e6a866] sm:text-xs md:mt-5 md:gap-2 md:rounded-md md:bg-[#d8924c] md:px-5 md:py-3 md:text-sm md:text-[#150e0b]"
+            className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#d8924c] hover:text-[#e6a866] sm:text-xs md:mt-5md:gap-2 md:rounded-md md:bg-[#d8924c] md:px-5 md:py-3 md:text-sm md:text-[#150e0b]"
           >
             Explorar NFTs
             <ArrowRight size={13} aria-hidden="true" />
@@ -388,7 +392,7 @@ export function HomePage() {
                       sort: event.target.value as NFTSort,
                     })
                   }
-                  className="rounded-lg border border-[#493125] bg-[#241710] px-3 py-2 text-xs text-[#f0e8df] outline-none focus:border-[#d8924c] md:py-2.5 md:text-sm"
+                  className="rounded-lg border border-[#493125] bg-[#241710] px-3 py-2 text-xs text-[#f0e8df] outline-none focus:border-[#d8924c]md:py-2.5 md:text-sm"
                 >
                   <option value="recent">Mais recentes</option>
                   <option value="price-asc">Menor preço</option>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import axios from "axios";
 import {
@@ -48,31 +48,40 @@ export function ProfilePage() {
 
   const updateProfile = useUpdateCollectorProfile();
 
-  const [form, setForm] = useState<UpdateCollectorProfileInput>(emptyForm);
+  const [formState, setFormState] = useState<{
+    source: typeof profile;
+    values: UpdateCollectorProfileInput;
+  }>({ source: profile, values: profile ? {
+    name: profile.name,
+    username: profile.username,
+    email: profile.email,
+    ens: profile.ens,
+    walletNickname: profile.walletNickname,
+  } : emptyForm });
+
+  const form = formState.source === profile
+    ? formState.values
+    : profile
+      ? {
+          name: profile.name,
+          username: profile.username,
+          email: profile.email,
+          ens: profile.ens,
+          walletNickname: profile.walletNickname,
+        }
+      : emptyForm;
 
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!profile) return;
-
-    setForm({
-      name: profile.name,
-      username: profile.username,
-      email: profile.email,
-      ens: profile.ens,
-      walletNickname: profile.walletNickname,
-    });
-  }, [profile]);
 
   function change(field: keyof UpdateCollectorProfileInput, value: string) {
     setMessage(null);
     setError(null);
 
-    setForm((previous) => ({
-      ...previous,
-      [field]: value,
-    }));
+    setFormState({
+      source: profile,
+      values: { ...form, [field]: value },
+    });
   }
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
