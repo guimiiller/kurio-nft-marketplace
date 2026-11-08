@@ -1,9 +1,29 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Heart, Home, ShoppingCart, UserRound } from "lucide-react";
 
 import { defaultNFTFilters } from "../../features/nfts/types/nft-filters.types";
+import { useAuthSession } from "../../features/auth/hooks/use-auth-session";
+import { useCart } from "../../features/cart/hooks/use-cart";
 
 export function MobileNavigation() {
+  const session = useAuthSession();
+  const { data: cart } = useCart();
+
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+
+  const cartCount =
+    cart?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
+
+  const activeClass = "text-[#d8924c]";
+  const inactiveClass = "text-[#f0e8df]";
+
+  const homeActive = pathname === "/";
+  const favoritesActive = pathname === "/favorites";
+  const cartActive = pathname === "/cart" || pathname === "/checkout";
+  const profileActive = pathname === "/profile" || pathname === "/wallets";
+
   return (
     <nav
       aria-label="Navegação mobile"
@@ -13,22 +33,44 @@ export function MobileNavigation() {
         to="/"
         search={defaultNFTFilters}
         aria-label="Início"
-        className="text-[#d8924c]"
+        aria-current={homeActive ? "page" : undefined}
+        className={homeActive ? activeClass : inactiveClass}
       >
         <Home size={23} />
       </Link>
 
-      <span aria-label="Favoritos" className="text-[#f0e8df]">
-        <Heart size={23} />
-      </span>
+      <Link
+        to={session ? "/favorites" : "/login"}
+        aria-label="Meus favoritos"
+        aria-current={favoritesActive ? "page" : undefined}
+        className={favoritesActive ? activeClass : inactiveClass}
+      >
+        <Heart size={23} fill={favoritesActive ? "currentColor" : "none"} />
+      </Link>
 
-      <span aria-label="Carrinho" className="text-[#f0e8df]">
+      <Link
+        to="/cart"
+        aria-label={`Carrinho, ${cartCount} itens`}
+        aria-current={cartActive ? "page" : undefined}
+        className={`relative ${cartActive ? activeClass : inactiveClass}`}
+      >
         <ShoppingCart size={23} />
-      </span>
 
-      <span aria-label="Perfil" className="text-[#f0e8df]">
+        {cartCount > 0 && (
+          <span className="absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#d8924c] px-1 text-[10px] font-bold text-[#150e0b]">
+            {cartCount}
+          </span>
+        )}
+      </Link>
+
+      <Link
+        to={session ? "/profile" : "/login"}
+        aria-label={session ? "Meu perfil" : "Entrar"}
+        aria-current={profileActive ? "page" : undefined}
+        className={profileActive ? activeClass : inactiveClass}
+      >
         <UserRound size={23} />
-      </span>
+      </Link>
     </nav>
   );
 }
