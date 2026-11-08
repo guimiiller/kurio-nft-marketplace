@@ -2,6 +2,7 @@ import { http, HttpResponse } from "msw";
 
 import { nfts } from "../fixtures/nfts";
 import { getAuthenticatedUserId } from "../lib/auth";
+import { getAvailableStock } from "../lib/stock";
 
 import type {
   Cart,
@@ -80,11 +81,12 @@ function toResponse(cart: Cart): CartResponse {
           name: nft.name,
           image: nft.image,
           price: nft.price,
-          available: nft.available,
+          available: getAvailableStock(nft.id),
           network: nft.network,
         },
       ];
     }),
+
     couponCode: cart.couponCode,
     version: cart.version,
   };
@@ -115,7 +117,6 @@ function unauthorized() {
 }
 
 export const cartHandlers = [
-  // Consultar carrinho
   http.get("/api/cart", ({ request }) => {
     const userId = getAuthenticatedUserId(request);
 
@@ -124,7 +125,6 @@ export const cartHandlers = [
     return HttpResponse.json(toResponse(readCart(userId)));
   }),
 
-  // Adicionar NFT
   http.post("/api/cart/items", async ({ request }) => {
     const userId = getAuthenticatedUserId(request);
 
@@ -155,14 +155,17 @@ export const cartHandlers = [
     if (quantity === null) return invalidQuantity();
 
     const cart = readCart(userId);
+
     const existing = cart.items.find((item) => item.nftId === nftId);
 
     const nextQuantity = (existing?.quantity ?? 0) + quantity;
 
-    if (nextQuantity > nft.available) {
+    const available = getAvailableStock(nftId);
+
+    if (!Number.isSafeInteger(nextQuantity) || nextQuantity > available) {
       return HttpResponse.json(
         {
-          message: `Estoque insuficiente. Disponível: ${nft.available}.`,
+          message: `Estoque insuficiente. Disponível: ${available}.`,
         },
         { status: 409 },
       );
@@ -182,7 +185,6 @@ export const cartHandlers = [
     });
   }),
 
-  // Atualizar quantidade
   http.patch("/api/cart/items/:nftId", async ({ params, request }) => {
     const userId = getAuthenticatedUserId(request);
 
@@ -219,10 +221,12 @@ export const cartHandlers = [
       );
     }
 
-    if (quantity > nft.available) {
+    const available = getAvailableStock(nftId);
+
+    if (quantity > available) {
       return HttpResponse.json(
         {
-          message: `Estoque insuficiente. Disponível: ${nft.available}.`,
+          message: `Estoque insuficiente. Disponível: ${available}.`,
         },
         { status: 409 },
       );
@@ -236,7 +240,6 @@ export const cartHandlers = [
     return HttpResponse.json(toResponse(cart));
   }),
 
-  // Remover NFT
   http.delete("/api/cart/items/:nftId", ({ params, request }) => {
     const userId = getAuthenticatedUserId(request);
 

@@ -16,12 +16,12 @@ import {
   useUpdateCartItem,
 } from "../features/cart/hooks/use-cart";
 import { ethToWei, multiplyEth, weiToEth } from "../features/cart/utils/eth";
+import { useAuthSession } from "../features/auth/hooks/use-auth-session";
 import { defaultNFTFilters } from "../features/nfts/types/nft-filters.types";
 
 function getErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const message: unknown = error.response?.data?.message;
-
     if (typeof message === "string") return message;
   }
 
@@ -29,6 +29,7 @@ function getErrorMessage(error: unknown): string {
 }
 
 export function CartPage() {
+  const session = useAuthSession();
   const { data: cart, isPending, isError, refetch } = useCart();
   const updateItem = useUpdateCartItem();
   const removeItem = useRemoveCartItem();
@@ -105,20 +106,35 @@ export function CartPage() {
           </div>
         </div>
 
-        {isPending ? (
+        {!session ? (
+          <div className="flex flex-col items-center rounded-xl border border-[#39251b] bg-[#241710] px-6 py-16 text-center">
+            <ShoppingBag size={44} className="mb-5 text-[#d8924c]" />
+            <h2 className="text-xl font-bold">
+              Entre para acessar seu carrinho
+            </h2>
+            <p className="mt-2 max-w-sm text-sm text-[#a99b91]">
+              Seus NFTs ficam associados à sua conta.
+            </p>
+            <Link
+              to="/login"
+              className="mt-7 rounded-lg bg-[#d8924c] px-6 py-3 font-bold text-[#150e0b]"
+            >
+              Entrar
+            </Link>
+          </div>
+        ) : isPending ? (
           <div
             role="status"
             className="rounded-xl border border-[#39251b] bg-[#241710] p-8 text-[#b9a79a]"
           >
             Carregando seu carrinho...
           </div>
-        ) : isError ? (
+        ) : isError || !cart ? (
           <div
             role="alert"
             className="rounded-xl border border-[#70402f] bg-[#241710] p-8"
           >
             <p>Não foi possível carregar o carrinho.</p>
-
             <button
               type="button"
               onClick={() => void refetch()}
@@ -142,13 +158,10 @@ export function CartPage() {
             {cart.items.length === 0 ? (
               <div className="flex flex-col items-center rounded-xl border border-[#39251b] bg-[#241710] px-6 py-16 text-center">
                 <ShoppingBag size={44} className="mb-5 text-[#d8924c]" />
-
                 <h2 className="text-xl font-bold">Seu carrinho está vazio</h2>
-
                 <p className="mt-2 max-w-sm text-sm text-[#a99b91]">
                   Explore o mercado e encontre NFTs para sua coleção.
                 </p>
-
                 <Link
                   to="/"
                   search={defaultNFTFilters}
@@ -197,11 +210,9 @@ export function CartPage() {
                             >
                               {item.name}
                             </Link>
-
                             <p className="mt-1 text-xs text-[#a99b91]">
                               {item.network}
                             </p>
-
                             <button
                               type="button"
                               disabled={isMutating}
@@ -226,7 +237,6 @@ export function CartPage() {
                           <span className="text-sm text-[#a99b91] md:hidden">
                             Quantidade
                           </span>
-
                           <div className="inline-flex items-center rounded-lg border border-[#503629]">
                             <button
                               type="button"
@@ -270,7 +280,6 @@ export function CartPage() {
                           <span className="text-[#a99b91] md:hidden">
                             Total
                           </span>
-
                           <span>
                             {multiplyEth(item.price, item.quantity)} ETH
                           </span>
@@ -300,12 +309,12 @@ export function CartPage() {
 
                   <div className="mt-4 flex justify-between text-sm">
                     <span className="text-[#a99b91]">Desconto</span>
-                    <span>A calcular</span>
+                    <span>A calcular no checkout</span>
                   </div>
 
                   <div className="mt-4 flex justify-between text-sm">
                     <span className="text-[#a99b91]">Taxa de rede</span>
-                    <span>A calcular</span>
+                    <span>A calcular no checkout</span>
                   </div>
 
                   <div className="my-6 border-t border-[#503629]" />
@@ -322,14 +331,12 @@ export function CartPage() {
                     taxas.
                   </p>
 
-                  <button
-                    type="button"
-                    disabled
-                    title="Checkout será implementado na próxima etapa"
-                    className="mt-6 w-full rounded-lg bg-[#d8924c] px-5 py-4 font-bold text-[#150e0b] opacity-60"
+                  <Link
+                    to="/checkout"
+                    className="mt-6 block w-full rounded-lg bg-[#d8924c] px-5 py-4 text-center font-bold text-[#150e0b] hover:bg-[#e6a663]"
                   >
                     Conectar e finalizar
-                  </button>
+                  </Link>
 
                   <Link
                     to="/"
