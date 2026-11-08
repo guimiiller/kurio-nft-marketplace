@@ -68,15 +68,22 @@ export function AuthPage({ mode }: AuthPageProps) {
     }
   }
 
+  const inputClass =
+    "w-full rounded-lg border border-[#493125] bg-[#150e0b] px-4 py-3 outline-none transition-colors focus:border-[#d8924c]";
+
   return (
-    <main className="min-h-[calc(100vh-80px)] bg-[#150e0b] px-4 py-8 text-[#f0e8df] md:fixed md:inset-0 md:z-50 md:flex md:min-h-screen md:items-center md:justify-center md:bg-black/75 md:px-6 md:py-10">
-      <div className="mx-auto w-full max-w-md rounded-2xl bg-[#241710] px-5 py-7 shadow-2xl sm:px-8 md:max-h-[90vh] md:overflow-y-auto md:border md:border-[#493125]">
-        <div className="mb-6 flex items-center justify-between">
+    <main className="min-h-[calc(100vh-80px)] bg-[#150e0b] px-4 py-6 text-[#f0e8df] md:fixed md:inset-0 md:z-50 md:flex md:min-h-0 md:items-center md:justify-center md:overflow-y-auto md:bg-black/75 md:px-6 md:py-6">
+      <div
+        className={`mx-auto w-full max-w-md rounded-2xl border border-[#493125] bg-[#241710] px-5 shadow-2xl sm:px-8 ${
+          isSignup ? "py-5 md:py-6" : "py-7"
+        }`}
+      >
+        <div className="relative mb-5 flex min-h-9 items-center justify-center">
           <Link
             to="/"
             search={defaultNFTFilters}
             aria-label="Voltar ao mercado"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-[#d8924c] md:hidden"
+            className="absolute left-0 flex h-9 w-9 items-center justify-center rounded-full text-[#d8924c] hover:bg-[#352119] md:hidden"
           >
             <ArrowLeft size={22} />
           </Link>
@@ -89,7 +96,7 @@ export function AuthPage({ mode }: AuthPageProps) {
             to="/"
             search={defaultNFTFilters}
             aria-label="Fechar"
-            className="hidden h-9 w-9 items-center justify-center rounded-full text-[#d8924c] hover:bg-[#352119] md:flex"
+            className="absolute right-0 hidden h-9 w-9 items-center justify-center rounded-full text-[#d8924c] hover:bg-[#352119] md:flex"
           >
             <X size={21} />
           </Link>
@@ -107,14 +114,14 @@ export function AuthPage({ mode }: AuthPageProps) {
 
         <form
           onSubmit={(event) => void handleSubmit(event)}
-          className="mt-7 space-y-4"
+          className={isSignup ? "mt-5 space-y-3" : "mt-7 space-y-4"}
         >
           {isSignup && (
             <>
               <div>
                 <label
                   htmlFor="auth-name"
-                  className="mb-2 block text-sm font-medium"
+                  className="mb-1.5 block text-sm font-medium"
                 >
                   Nome completo
                 </label>
@@ -125,7 +132,7 @@ export function AuthPage({ mode }: AuthPageProps) {
                   required
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  className="w-full rounded-lg border border-[#493125] bg-[#150e0b] px-4 py-3 outline-none focus:border-[#d8924c]"
+                  className={inputClass}
                   placeholder="Seu nome"
                 />
               </div>
@@ -133,7 +140,7 @@ export function AuthPage({ mode }: AuthPageProps) {
               <div>
                 <label
                   htmlFor="auth-username"
-                  className="mb-2 block text-sm font-medium"
+                  className="mb-1.5 block text-sm font-medium"
                 >
                   Nome de usuário
                 </label>
@@ -144,7 +151,7 @@ export function AuthPage({ mode }: AuthPageProps) {
                   required
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
-                  className="w-full rounded-lg border border-[#493125] bg-[#150e0b] px-4 py-3 outline-none focus:border-[#d8924c]"
+                  className={inputClass}
                   placeholder="seuusuario"
                 />
               </div>
@@ -154,7 +161,7 @@ export function AuthPage({ mode }: AuthPageProps) {
           <div>
             <label
               htmlFor="auth-email"
-              className="mb-2 block text-sm font-medium"
+              className="mb-1.5 block text-sm font-medium"
             >
               E-mail
             </label>
@@ -165,7 +172,7 @@ export function AuthPage({ mode }: AuthPageProps) {
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-lg border border-[#493125] bg-[#150e0b] px-4 py-3 outline-none focus:border-[#d8924c]"
+              className={inputClass}
               placeholder="seu@email.com"
             />
           </div>
@@ -173,7 +180,7 @@ export function AuthPage({ mode }: AuthPageProps) {
           <div>
             <label
               htmlFor="auth-password"
-              className="mb-2 block text-sm font-medium"
+              className="mb-1.5 block text-sm font-medium"
             >
               Senha
             </label>
@@ -187,7 +194,7 @@ export function AuthPage({ mode }: AuthPageProps) {
                 required
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-lg border border-[#493125] bg-[#150e0b] px-4 py-3 pr-12 outline-none focus:border-[#d8924c]"
+                className={`${inputClass} pr-12`}
                 placeholder="Digite sua senha"
               />
 
@@ -214,13 +221,17 @@ export function AuthPage({ mode }: AuthPageProps) {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full rounded-lg bg-[#d8924c] px-5 py-3 font-bold text-[#150e0b] disabled:cursor-wait disabled:opacity-60"
+            className="w-full rounded-lg bg-[#d8924c] px-5 py-3 font-bold text-[#150e0b] transition-colors hover:bg-[#e6a866] disabled:cursor-wait disabled:opacity-60"
           >
             {isPending ? "Aguarde..." : isSignup ? "Criar conta" : "Entrar"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-[#b99b80]">
+        <p
+          className={`text-center text-sm text-[#b99b80] ${
+            isSignup ? "mt-4" : "mt-6"
+          }`}
+        >
           {isSignup ? "Já possui uma conta?" : "Ainda não tem conta?"}{" "}
           <Link
             to={isSignup ? "/login" : "/signup"}
@@ -230,7 +241,11 @@ export function AuthPage({ mode }: AuthPageProps) {
           </Link>
         </p>
 
-        <p className="mt-6 text-center text-xs leading-5 text-[#8f7a6b]">
+        <p
+          className={`text-center text-xs leading-5 text-[#8f7a6b] ${
+            isSignup ? "mt-3" : "mt-6"
+          }`}
+        >
           Ambiente demonstrativo. Não utilize senhas reais.
         </p>
       </div>
