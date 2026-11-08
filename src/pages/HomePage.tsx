@@ -273,7 +273,7 @@ export function HomePage() {
       )}
 
       {/* Hero */}
-      <section className="relative mb-5 min-h-[178px] overflow-hidden rounded-2xl bg-[#382318] sm:min-h-[205px] md:mb-10 md:grid md:min-h-0 md:grid-cols-2 md:items-center md:gap-6 md:bg-transparent">
+      <section className="relative mb-5 min-h-44.5 overflow-hidden rounded-2xl bg-[#382318] sm:min-h-51.25 md:mb-10 md:grid md:min-h-0 md:grid-cols-2 md:items-center md:gap-6 md:bg-transparent">
         <div className="relative z-10 w-[66%] px-3 py-4 sm:px-5 md:w-full md:px-5 md:py-0">
           <p className="mb-1 text-[9px] tracking-wide text-[#e1bd94] sm:text-xs md:mb-3">
             Bem-vindo à Kurio
@@ -283,7 +283,7 @@ export function HomePage() {
             Seja dono do futuro da arte digital
           </h1>
 
-          <p className="mt-2 line-clamp-3 text-[9px] leading-[1.5] text-[#c9aa8c] sm:text-xs md:mt-4 md:line-clamp-none md:max-w-lg md:text-sm md:leading-6">
+          <p className="mt-2 line-clamp-3 text-[9px] leading-normal text-[#c9aa8c] sm:text-xs md:mt-4 md:line-clamp-none md:max-w-lg md:text-sm md:leading-6">
             Descubra NFTs selecionados de criadores emergentes e consagrados.
             Colecione arte digital rara, apoie artistas e tenha uma parte da
             cultura da internet.
@@ -306,7 +306,7 @@ export function HomePage() {
             fetchPriority="high"
           />
 
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-[#382318] to-transparent md:hidden" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-linear-to-r from-[#382318] to-transparent md:hidden" />
         </div>
       </section>
 
