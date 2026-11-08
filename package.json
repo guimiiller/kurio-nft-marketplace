@@ -24,6 +24,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@mswjs/socket.io-binding": "^0.2.0",
+    "@playwright/test": "^1.65.0",
     "@tanstack/react-router-devtools": "^1.167.2",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
